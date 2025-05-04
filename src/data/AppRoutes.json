@@ -1,0 +1,93 @@
+[
+  {
+    "routeName": "home",
+    "descriptor": "Home",
+    "shortcutKey": "H"
+  },
+  {
+    "routeName": "inventory",
+    "descriptor": "Inventory",
+    "shortcutKey": "I",
+    "children": [
+      {
+        "routeName": "weapons",
+        "descriptor": "Weapons",
+        "shortcutKey": "W"
+      },
+      {
+        "routeName": "gear",
+        "descriptor": "Gear",
+        "shortcutKey": "G"
+      },
+      {
+        "routeName": "gear-mods",
+        "descriptor": "Gear Mods",
+        "shortcutKey": "M"
+      },
+      {
+        "routeName": "skill-mods",
+        "descriptor": "Skill Mods",
+        "shortcutKey": "o"
+      },
+      {
+        "routeName": "build-inventory",
+        "descriptor": "Builds",
+        "shortcutKey": "u"
+      }
+    ]
+  },
+  {
+    "routeName": "builds",
+    "descriptor": "Builds",
+    "shortcutKey": "B",
+    "children": [
+      {
+        "routeName": "create-build",
+        "descriptor": "Create",
+        "shortcutKey": "C"
+      },
+      {
+        "routeName": "compare-build",
+        "descriptor": "Compare",
+        "shortcutKey": "a"
+      }
+    ]
+  },
+  {
+    "routeName": "library",
+    "descriptor": "Library",
+    "shortcutKey": "L",
+    "children": [
+      {
+        "routeName": "library-40",
+        "descriptor": "Level 40",
+        "shortcutKey": "4"
+      },
+      {
+        "routeName": "library-30",
+        "descriptor": "Level 30",
+        "shortcutKey": "3"
+      },
+      {
+        "routeName": "proficiency",
+        "descriptor": "Proficiency",
+        "shortcutKey": "P"
+      }
+    ]
+  },
+  {
+    "routeName": "specializations",
+    "descriptor": "Specializations",
+    "shortcutKey": "z"
+  },
+  {
+    "routeName": "settings",
+    "descriptor": "Settings",
+    "shortcutKey": "S"
+  },
+  {
+    "routeName": "links",
+    "descriptor": "Links",
+    "shortcutKey": "k"
+  }
+]
