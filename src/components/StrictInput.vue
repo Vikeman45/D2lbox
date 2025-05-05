@@ -1,41 +1,3 @@
-<template>
-  <div id="container">
-    <p>Current index = {{ currentIndex }}</p>
-    <label for="select">Weapon Name</label>
-    <div id="user-input" @click="caretManager" :class="{ error: isError }">
-      <span id="pre" class="auto-text" @click="caretManager">
-        {{ preInput }}
-      </span>
-      <span
-        id="input"
-        ref="input"
-        contenteditable="true"
-        spellcheck="false"
-        @input="handleInput"
-        @beforeinput="getSelection"
-        @click="caretManager"
-        @keydown="navigateOptions"
-      ></span>
-      <span id="post" class="auto-text" @click="caretManager">
-        {{ postInput }}
-      </span>
-    </div>
-    <select
-      ref="select"
-      id="select"
-      autocomplete="off"
-      tabindex="-1"
-      :size="Math.min(15, filteredOptions.length + 1)"
-      @change="chooseOption"
-    >
-      <option disabled>{{ choiceCount }}</option>
-      <option v-for="{ name, id } in filteredOptions" :key="id" :value="id">
-        {{ name }}
-      </option>
-    </select>
-  </div>
-</template>
-
 <script setup lang="ts">
 import { ref, computed, watchEffect, nextTick } from 'vue'
 
@@ -269,6 +231,44 @@ function chooseOption(e: Event) {
   console.timeEnd(`<-- chooseOption()`)
 }
 </script>
+
+<template>
+  <div id="container">
+    <p>Current index = {{ currentIndex }}</p>
+    <label for="select">Weapon Name</label>
+    <div id="user-input" @click="caretManager" :class="{ error: isError }">
+      <span id="pre" class="auto-text" @click="caretManager">
+        {{ preInput }}
+      </span>
+      <span
+        id="input"
+        ref="input"
+        contenteditable="true"
+        spellcheck="false"
+        @input="handleInput"
+        @beforeinput="getSelection"
+        @click="caretManager"
+        @keydown="navigateOptions"
+      ></span>
+      <span id="post" class="auto-text" @click="caretManager">
+        {{ postInput }}
+      </span>
+    </div>
+    <select
+      ref="select"
+      id="select"
+      autocomplete="off"
+      tabindex="-1"
+      :size="Math.min(15, filteredOptions.length + 1)"
+      @change="chooseOption"
+    >
+      <option disabled>{{ choiceCount }}</option>
+      <option v-for="{ name, id } in filteredOptions" :key="id" :value="id">
+        {{ name }}
+      </option>
+    </select>
+  </div>
+</template>
 
 <style scoped>
 #container {

@@ -1,3 +1,38 @@
+<script setup lang="ts">
+import { ref, onMounted, onUnmounted } from 'vue'
+
+const isFullscreen = ref()
+
+async function toggleFullscreen() {
+  if (!isFullscreen.value) {
+    try {
+      await document.getElementsByTagName('HTML')[0].requestFullscreen()
+    } catch (err) {
+      alert("Couldn't enter fullscreen mode")
+      console.error(err)
+    }
+  } else {
+    document.exitFullscreen()
+  }
+}
+
+onMounted(() => {
+  isFullscreen.value = document.fullscreenElement !== null
+  document.addEventListener(
+    'fullscreenchange',
+    () => (isFullscreen.value = document.fullscreenElement !== null),
+  )
+})
+
+onUnmounted(() => {
+  console.log('onUnmounted from FullscreenToggle')
+  document.removeEventListener(
+    'fullscreenchange',
+    () => (isFullscreen.value = document.fullscreenElement !== null),
+  )
+})
+</script>
+
 <template>
   <button
     v-if="isFullscreen"
@@ -48,41 +83,6 @@
     </slot>
   </button>
 </template>
-
-<script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
-
-let isFullscreen = ref()
-
-async function toggleFullscreen() {
-  if (!isFullscreen.value) {
-    try {
-      await document.getElementsByTagName('HTML')[0].requestFullscreen()
-    } catch (err) {
-      alert("Couldn't enter fullscreen mode")
-      console.error(err)
-    }
-  } else {
-    document.exitFullscreen()
-  }
-}
-
-onMounted(() => {
-  isFullscreen.value = document.fullscreenElement !== null
-  document.addEventListener(
-    'fullscreenchange',
-    () => (isFullscreen.value = document.fullscreenElement !== null),
-  )
-})
-
-onUnmounted(() => {
-  console.log('onUnmounted from FullscreenToggle')
-  document.removeEventListener(
-    'fullscreenchange',
-    () => (isFullscreen.value = document.fullscreenElement !== null),
-  )
-})
-</script>
 
 <style scoped>
 nav {

@@ -1,3 +1,10 @@
+<script setup lang="ts">
+import { useAppShortcutKeysStore } from '@/stores/appShortcutKeysStore'
+import { storeToRefs } from 'pinia'
+
+const { showShortcutKeys } = storeToRefs(useAppShortcutKeysStore())
+</script>
+
 <template>
   <main class="about app-grid-main">
     <h1>This is the Settings page</h1>
@@ -5,13 +12,6 @@
     <label for="shortcuts">Show Shortcuts?</label>
   </main>
 </template>
-
-<script setup lang="ts">
-import { useAppShortcutKeysStore } from '@/stores/appShortcutKeysStore'
-import { storeToRefs } from 'pinia'
-
-const { showShortcutKeys } = storeToRefs(useAppShortcutKeysStore())
-</script>
 
 <style scoped>
 h1 {

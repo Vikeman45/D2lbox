@@ -1,3 +1,10 @@
+<script setup lang="ts">
+import { storeToRefs } from 'pinia'
+import { useAppShortcutKeysStore } from '@/stores/appShortcutKeysStore'
+
+const { registeredKeys } = storeToRefs(useAppShortcutKeysStore())
+</script>
+
 <template>
   <aside class="app-grid-right">
     <h4>Keyboard Shortcuts</h4>
@@ -18,13 +25,6 @@
     </template>
   </aside>
 </template>
-
-<script setup lang="ts">
-import { storeToRefs } from 'pinia'
-import { useAppShortcutKeysStore } from '@/stores/appShortcutKeysStore'
-
-const { registeredKeys } = storeToRefs(useAppShortcutKeysStore())
-</script>
 
 <style scoped>
 aside {

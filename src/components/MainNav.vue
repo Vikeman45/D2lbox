@@ -1,3 +1,12 @@
+<script setup lang="ts">
+import FullscreenToggle from './FullscreenToggle.vue'
+import RouterButton from '@/components/RouterButton.vue'
+import { useMenuStructureStore } from '@/stores/menuStructureStore'
+import { storeToRefs } from 'pinia'
+
+const { menuItemData } = storeToRefs(useMenuStructureStore())
+</script>
+
 <template>
   <nav>
     <RouterButton
@@ -11,15 +20,6 @@
     <FullscreenToggle />
   </nav>
 </template>
-
-<script setup lang="ts">
-import FullscreenToggle from './FullscreenToggle.vue'
-import RouterButton from '@/components/RouterButton.vue'
-import { useMenuStructureStore } from '@/stores/menuStructureStore'
-import { storeToRefs } from 'pinia'
-
-const { menuItemData } = storeToRefs(useMenuStructureStore())
-</script>
 
 <style scoped>
 nav {

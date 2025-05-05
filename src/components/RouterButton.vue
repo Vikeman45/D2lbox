@@ -1,18 +1,3 @@
-<template>
-  <button
-    @click="routeName !== $route.name && $router.push({ name: routeName })"
-    :disabled="routeName === $route.name"
-  >
-    <span v-if="hasKey">
-      {{ startText }}<span class="shortcut">{{ shortcutKey }}</span
-      >{{ endText }}
-    </span>
-    <span v-else>
-      {{ buttonText }}
-    </span>
-  </button>
-</template>
-
 <script setup lang="ts">
 import { computed } from 'vue'
 import { ref, onMounted, onUnmounted } from 'vue'
@@ -86,6 +71,21 @@ onUnmounted(() => {
   store.removeAppKeys(myKeyId)
 })
 </script>
+
+<template>
+  <button
+    @click="routeName !== $route.name && $router.push({ name: routeName })"
+    :disabled="routeName === $route.name"
+  >
+    <span v-if="hasKey">
+      {{ startText }}<span class="shortcut">{{ shortcutKey }}</span
+      >{{ endText }}
+    </span>
+    <span v-else>
+      {{ buttonText }}
+    </span>
+  </button>
+</template>
 
 <style scoped>
 .shortcut {

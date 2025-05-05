@@ -1,23 +1,3 @@
-<template>
-  <main class="inventory app-grid-main">
-    <h1>This is the Inventory page</h1>
-    <input />
-    <StrictInput :options="weaponModels" />
-    <input />
-  </main>
-
-  <nav class="app-grid-left">
-    <RouterButton
-      v-for="item in items"
-      :key="item.routeName"
-      route-name="links"
-      :text="item.descriptor"
-      :shortcut-key="item.shortcutKey"
-      class="nav-button"
-    />
-  </nav>
-</template>
-
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
 import { computed, ref, watchEffect } from 'vue'
@@ -37,6 +17,26 @@ watchEffect(async () => {
   )
 })
 </script>
+
+<template>
+  <main class="inventory app-grid-main">
+    <h1>This is the Inventory page</h1>
+    <input />
+    <StrictInput :options="weaponModels" />
+    <input />
+  </main>
+
+  <nav class="app-grid-left">
+    <RouterButton
+      v-for="item in items"
+      :key="item.routeName"
+      route-name="links"
+      :text="item.descriptor"
+      :shortcut-key="item.shortcutKey"
+      class="nav-button"
+    />
+  </nav>
+</template>
 
 <style scoped>
 .app-grid-left {
