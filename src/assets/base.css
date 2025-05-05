@@ -16,7 +16,9 @@ html {
   -moz-osx-font-smoothing: grayscale;
 }
 
-input, button, textarea, select {
+input,
+button,
+textarea,
+select {
   font: inherit;
 }
-

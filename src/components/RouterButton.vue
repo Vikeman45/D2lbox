@@ -1,10 +1,11 @@
 <template>
-  <button 
-    @click="routeName !== $route.name && $router.push({name: routeName})"
+  <button
+    @click="routeName !== $route.name && $router.push({ name: routeName })"
     :disabled="routeName === $route.name"
   >
     <span v-if="hasKey">
-      {{ startText }}<span class="shortcut">{{ shortcutKey }}</span>{{ endText }}
+      {{ startText }}<span class="shortcut">{{ shortcutKey }}</span
+      >{{ endText }}
     </span>
     <span v-else>
       {{ buttonText }}
@@ -51,7 +52,8 @@ const store = useAppShortcutKeysStore()
 let myKeyId: tAppKeyRecordLocator[]
 
 onMounted(() => {
-  if (!hasKey.value) { //escape hatch if there is no shortcut key to assign
+  if (!hasKey.value) {
+    //escape hatch if there is no shortcut key to assign
     return
   }
 
@@ -60,20 +62,23 @@ onMounted(() => {
       e.preventDefault()
       e.stopImmediatePropagation()
       if (props.routeName !== route.name) {
-        router.push({name: props.routeName})
+        router.push({ name: props.routeName })
       }
     }
   }
-  myKeyId = store.addAppKeys({context: "Menu Item", 
-                keys: ['Alt', props.shortcutKey as string],
-                description: buttonText.value})
-  document.addEventListener('keydown', listener, {signal: removeEvent.signal})                               
+  myKeyId = store.addAppKeys({
+    context: 'Menu Item',
+    keys: ['Alt', props.shortcutKey as string],
+    description: buttonText.value,
+  })
+  document.addEventListener('keydown', listener, { signal: removeEvent.signal })
 })
 
 onUnmounted(() => {
   //console.log(`${buttonText.value} unmounted`)
 
-  if (!hasKey.value) { //escape hatch if there is no shortcut key to unassign
+  if (!hasKey.value) {
+    //escape hatch if there is no shortcut key to unassign
     return
   }
 
@@ -81,7 +86,6 @@ onUnmounted(() => {
   store.removeAppKeys(myKeyId)
 })
 </script>
-
 
 <style scoped>
 .shortcut {

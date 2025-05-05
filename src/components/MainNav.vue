@@ -1,10 +1,10 @@
 <template>
   <nav>
-    <RouterButton 
+    <RouterButton
       v-for="item in menuItemData"
       :key="item.routeName"
-      :route-name="item.routeName" 
-      :text="item.descriptor" 
+      :route-name="item.routeName"
+      :text="item.descriptor"
       :shortcut-key="item.shortcutKey"
       class="nav-button"
     />
@@ -13,22 +13,22 @@
 </template>
 
 <script setup lang="ts">
-  import FullscreenToggle from './FullscreenToggle.vue';
-  import RouterButton from '@/components/RouterButton.vue'
-  import { useMenuStructureStore } from '@/stores/menuStructureStore'
-  import { storeToRefs } from 'pinia'
+import FullscreenToggle from './FullscreenToggle.vue'
+import RouterButton from '@/components/RouterButton.vue'
+import { useMenuStructureStore } from '@/stores/menuStructureStore'
+import { storeToRefs } from 'pinia'
 
-  const { menuItemData } = storeToRefs(useMenuStructureStore())
+const { menuItemData } = storeToRefs(useMenuStructureStore())
 </script>
 
 <style scoped>
-  nav {
-    font-size: 20px;
-    margin: 0;
-    padding: 0 0;
-    overflow: hidden;
-    background-color: var(--nav-bg-color);
-    color: var(--nav-text-color);
-    position: relative;
-  }  
+nav {
+  font-size: 20px;
+  margin: 0;
+  padding: 0 0;
+  overflow: hidden;
+  background-color: var(--nav-bg-color);
+  color: var(--nav-text-color);
+  position: relative;
+}
 </style>

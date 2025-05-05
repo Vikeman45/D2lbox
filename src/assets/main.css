@@ -2,13 +2,26 @@
 @import './variables.css';
 
 body {
-  font-family: 'Comfortaa', Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', 
-    Roboto, Oxygen, Ubuntu, Cantarell, 'Fira Sans', 'Droid Sans', 'Helvetica Neue', 
+  font-family:
+    'Comfortaa',
+    Inter,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    Oxygen,
+    Ubuntu,
+    Cantarell,
+    'Fira Sans',
+    'Droid Sans',
+    'Helvetica Neue',
     sans-serif;
   font-size: 16px;
   color: var(--main-text-color);
   background-color: var(--main-bg-color);
-  transition: color 0.5s, background-color 0.5s;
+  transition:
+    color 0.5s,
+    background-color 0.5s;
 }
 
 /*********** Main App Grid Layout ***********/
@@ -19,10 +32,9 @@ body {
   grid-template-columns: max-content 1fr max-content;
   grid-template-rows: max-content 1fr max-content;
   grid-template-areas:
-    "top    top    top"
-    "left   main   right"
-    "bottom bottom bottom"
-
+    'top    top    top'
+    'left   main   right'
+    'bottom bottom bottom';
 }
 
 .app-grid-top {
@@ -48,7 +60,7 @@ body {
 /*********** Menu Button Behavior ***********/
 .nav-button {
   text-align: center;
-  padding: .5em 1em;
+  padding: 0.5em 1em;
   border: none;
   color: var(--nav-text-color);
   background-color: var(--nav-bg-color);
@@ -56,20 +68,20 @@ body {
 
 .nav-button:hover:not(:disabled) {
   background-color: var(--nav-hover-color);
-  transform: scale(1.1); 
+  transform: scale(1.1);
   transition: 0.3s;
   z-index: 1;
 }
 
 .nav-button:focus {
   color: var(--nav-hover-color);
-  transform: scale(1.1); 
+  transform: scale(1.1);
   transition: 0.3s;
   z-index: 1;
 }
 
 .nav-button:focus:hover {
-  color:var(--nav-text-color);
+  color: var(--nav-text-color);
   z-index: 1;
 }
 

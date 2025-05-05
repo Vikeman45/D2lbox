@@ -15,40 +15,45 @@ export const useAppShortcutKeysStore = defineStore('appShortcutKeys', () => {
   /** Action to add a keyboard shortcut to registeredKeys. You can add multiple shortcuts
    *  by passing them in an array. Shortcuts are added to their respective contexts in
    *  alphabetical order.
-   *  @param newKeys - shortcut key record(s) to be added. 
+   *  @param newKeys - shortcut key record(s) to be added.
    */
   function addAppKeys(newKeys: tAppKeyDefinition | tAppKeyDefinition[]): tAppKeyRecordLocator[] {
-    const references: tAppKeyRecordLocator[] = []  //array for returning shortcut locators
+    const references: tAppKeyRecordLocator[] = [] //array for returning shortcut locators
 
     if (!Array.isArray(newKeys)) {
       newKeys = [newKeys]
-    } 
-    
-    newKeys.forEach((key) => {              // cycle through the keys to be added
-      if (registeredKeys[key.context]) {    // if the context exists in the collection object
-                                            // then insert the new key alphabetically
+    }
+
+    newKeys.forEach((key) => {
+      // cycle through the keys to be added
+      if (registeredKeys[key.context]) {
+        // if the context exists in the collection object
+        // then insert the new key alphabetically
 
         const index = (registeredKeys[key.context] as tAppKeyRecord[]).findIndex((k) => {
           //console.log(`${key.description} <= ${k.description} ==> ${key.description <= k.description}`)
           return key.description <= k.description
         })
         //console.log(`index = ${index}`)
-        registeredKeys[key.context]?.splice(index, 0, {id: nextKeyId, 
-                                                       keys: key.keys, 
-                                                       description: key.description})
-      } else {                 //otherwise add the context and a new array for the new key
+        registeredKeys[key.context]?.splice(index, 0, {
+          id: nextKeyId,
+          keys: key.keys,
+          description: key.description,
+        })
+      } else {
+        //otherwise add the context and a new array for the new key
         //console.log(`inserted first element - ${key.description}`)
-        registeredKeys[key.context] = [{id: nextKeyId, 
-                                        keys: key.keys, 
-                                        description: key.description}]  
+        registeredKeys[key.context] = [
+          { id: nextKeyId, keys: key.keys, description: key.description },
+        ]
       }
-      references.push({context: key.context, id: nextKeyId++})
+      references.push({ context: key.context, id: nextKeyId++ })
     })
 
     return references
-}
+  }
 
-  /** Action to remove a keyboard shortcut previously registered with registeredKeys. 
+  /** Action to remove a keyboard shortcut previously registered with registeredKeys.
    *  You can remove multiple shortcuts by passing them in an array. If one of the
    *  records is not found in registeredKeys, it will fail silently and gracefully
    *  and simply move on to the next record (if there is one).
@@ -60,16 +65,19 @@ export const useAppShortcutKeysStore = defineStore('appShortcutKeys', () => {
     }
 
     idsToDelete.forEach((id) => {
-      if (registeredKeys[id.context] && 
-         (registeredKeys[id.context] as tAppKeyRecord[]).length > 0) {
-        const index = (registeredKeys[id.context] as tAppKeyRecord[])
-                        .findIndex((k) => k.id === id.id)
+      if (
+        registeredKeys[id.context] &&
+        (registeredKeys[id.context] as tAppKeyRecord[]).length > 0
+      ) {
+        const index = (registeredKeys[id.context] as tAppKeyRecord[]).findIndex(
+          (k) => k.id === id.id,
+        )
 
         if (index > -1) {
-            (registeredKeys[id.context] as tAppKeyRecord[]).splice(index, 1)
-            if ((registeredKeys[id.context] as tAppKeyRecord[]).length === 0) {
-              delete registeredKeys[id.context]
-            }
+          ;(registeredKeys[id.context] as tAppKeyRecord[]).splice(index, 1)
+          if ((registeredKeys[id.context] as tAppKeyRecord[]).length === 0) {
+            delete registeredKeys[id.context]
+          }
         }
       }
     })
@@ -78,42 +86,40 @@ export const useAppShortcutKeysStore = defineStore('appShortcutKeys', () => {
   return { showShortcutKeys, registeredKeys, addAppKeys, removeAppKeys }
 })
 
-
 //############### Type and Interface Definitions ###############//
 /** Type for available contexts (the when or why) of keyboard shortcuts */
-export type tKeyContext = "Menu Item" | "Navigation" | "Record Manipulation" | "Other"
+export type tKeyContext = 'Menu Item' | 'Navigation' | 'Record Manipulation' | 'Other'
 
 /** Type for the association of an action to a key combination
  *  @property keys - the key (or combination if an array) to invoke the shortcut
  *  @property description - brief (ideally one word) description of the shortcut action
  */
 export type tAppKeyBinding = {
-    keys: string | string[]
-    description: string
+  keys: string | string[]
+  description: string
 }
 
 /** Type for the full definition of a shortcut
  *    -- context + description + keys
  */
 export type tAppKeyDefinition = {
-    context: tKeyContext
+  context: tKeyContext
 } & tAppKeyBinding
 
-/** Type for the storage of a shortcut key in the collection 
+/** Type for the storage of a shortcut key in the collection
  *  @property id - a unique identifier generated by the collection when a new shortcut is added
-*/
+ */
 type tAppKeyRecord = {
-    id: number
+  id: number
 } & tAppKeyBinding
 
 /** Type for a unique identifier to a shortcut in the collection */
 export type tAppKeyRecordLocator = {
-    context: tKeyContext
-    id: number
+  context: tKeyContext
+  id: number
 }
 
 /** Type for the definition of the collection object for storing shortcut keys */
 type tAppKeyStore = {
   [key in tKeyContext]?: Array<tAppKeyRecord>
 }
-

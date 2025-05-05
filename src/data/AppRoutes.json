@@ -49,7 +49,7 @@
       {
         "routeName": "compare-build",
         "descriptor": "Compare",
-        "shortcutKey": "a"
+        "shortcutKey": "p"
       }
     ]
   },
@@ -84,6 +84,11 @@
     "routeName": "settings",
     "descriptor": "Settings",
     "shortcutKey": "S"
+  },
+  {
+    "routeName": "analyze",
+    "descriptor": "Analyze",
+    "shortcutKey": "A"
   },
   {
     "routeName": "links",

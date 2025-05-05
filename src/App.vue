@@ -16,10 +16,8 @@ import { RouterView } from 'vue-router'
 import MainNav from './components/MainNav.vue'
 import ShortcutList from '@/components/ShortcutList.vue'
 import { useAppShortcutKeysStore } from '@/stores/appShortcutKeysStore.ts'
-// import { useAppDatabaseStore } from '@/stores/appDatabaseStore'
 
 const { showShortcutKeys } = storeToRefs(useAppShortcutKeysStore())
-// useAppDatabaseStore()
 </script>
 
 <style scoped>

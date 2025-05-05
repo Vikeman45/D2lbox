@@ -3,8 +3,7 @@ import { defineStore } from 'pinia'
 
 //###################### Store Definition ######################//
 export const useUserProfileStore = defineStore('userProfile', () => {
-
-//###### State ######//
+  //###### State ######//
   /** Name of the current user (if known) */
   const userName = ref('')
   /** The platform for the current user */
@@ -12,20 +11,19 @@ export const useUserProfileStore = defineStore('userProfile', () => {
   /** The player's current character level */
   const userLevel = ref(40)
 
-//##### Getters #####//
+  //##### Getters #####//
   /** Getter description... */
   //const someGetter = computed(() => /*...*/)
 
-//##### Actions #####//
+  //##### Actions #####//
   /** Action description... */
   //function someAction(param) {
-    
+
   //}
 
- return { userName, platform, userLevel }
+  return { userName, platform, userLevel }
 })
-
 
 //############### Type and Interface Definitions ###############//
 /** Type for allowable platform types */
-export type tGamePlatform = "XBox" | "Playstation" | "PC"
+export type tGamePlatform = 'XBox' | 'Playstation' | 'PC'

@@ -3,4 +3,3 @@
     <h1>This is the Specializations page</h1>
   </main>
 </template>
-
