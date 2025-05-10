@@ -22,3 +22,8 @@ textarea,
 select {
   font: inherit;
 }
+
+select,
+::picker(select) {
+  appearance: base-select;
+}
