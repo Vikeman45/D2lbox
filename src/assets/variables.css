@@ -1,7 +1,8 @@
 :root {
-  --main-bg-color: #585048;
-  --main-text-color: #f4f0ec;
-  --nav-bg-color: #2c2926;
-  --nav-text-color: white;
-  --nav-hover-color: #fc7202;
+  --division-orange: oklch(0.7 0.2 45); /* Pulled from logo */
+  --main-bg-color: oklch(0.44 0.0168 45);
+  --main-text-color: oklch(0.96 0 45);
+  --nav-bg-color: oklch(0.28 0.007 45);
+  --nav-text-color: oklch(1 0 45);
+  --nav-hover-color: var(--division-orange);
 }

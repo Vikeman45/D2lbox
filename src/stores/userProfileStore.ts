@@ -7,7 +7,7 @@ export const useUserProfileStore = defineStore('userProfile', () => {
   /** Name of the current user (if known) */
   const userName = ref('')
   /** The platform for the current user */
-  const platform = ref('' as tGamePlatform | null)
+  const platform = ref<tGamePlatform | null>(null)
   /** The player's current character level */
   const userLevel = ref(40)
 

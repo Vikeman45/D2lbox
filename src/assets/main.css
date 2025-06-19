@@ -19,9 +19,9 @@ body {
   font-size: 16px;
   color: var(--main-text-color);
   background-color: var(--main-bg-color);
-  transition:
+  /* transition:
     color 0.5s,
-    background-color 0.5s;
+    background-color 0.5s; */
 }
 
 /*********** Main App Grid Layout ***********/
@@ -69,14 +69,14 @@ body {
 .nav-button:hover:not(:disabled) {
   background-color: var(--nav-hover-color);
   transform: scale(1.1);
-  transition: 0.3s;
+  transition: 0.15s;
   z-index: 1;
 }
 
 .nav-button:focus {
   color: var(--nav-hover-color);
   transform: scale(1.1);
-  transition: 0.3s;
+  transition: 0.15s;
   z-index: 1;
 }
 

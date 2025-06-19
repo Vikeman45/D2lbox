@@ -1,48 +1,13 @@
 <script setup lang="ts">
 import { useElementSize, watchDebounced } from '@vueuse/core'
 import * as d3 from 'd3'
-import { useTemplateRef, reactive } from 'vue'
+import { useTemplateRef, reactive, onMounted } from 'vue'
+import { useAnalyzeUIStore, type DataPoint } from '@/stores/analyzeUIStore'
+import { textHeightToRadius, setSpacing } from '@/helpers/treeGraphUtilities'
 
-interface DataPoint {
-  damage: number
-  method: string
-}
+const uiStore = useAnalyzeUIStore()
 
-//////////////// Helper Functions ///////////////////////////
-/**
- * @param text The text to fit within the radius
- * @param fontSize The height of the text in pixels (do not include the px unit)
- * @returns The smallest radius that incloses the text
- */
-function getTightRadius(text: string, fontSize: number) {
-  //console.log(`text=${text}, fontSize=${fontSize}`)
-  const radiusScaleFactors = [0.8966263895, 1.320887967, 1.665425458]
-  const maxDecimalPlaces = 2
-  const dotIndex = text.indexOf('.')
-  const decimalPlaces = dotIndex === -1 ? 0 : Math.min(text.length - dotIndex - 1, maxDecimalPlaces)
-  console.log(
-    `decimalPlaces=${decimalPlaces} -> font-size ${fontSize} means r=${fontSize * radiusScaleFactors[decimalPlaces]}`,
-  )
-  return fontSize * radiusScaleFactors[decimalPlaces]
-}
-
-function setSpacing(
-  dataPoints: number[],
-  initialMargin: number,
-  innerGap: number,
-  elementSize: number,
-) {
-  const top = initialMargin > 1 ? initialMargin : elementSize * initialMargin
-  const gap = innerGap > 1 ? innerGap : elementSize * innerGap
-
-  return function (value: number, n?: number) {
-    n = n ?? dataPoints.indexOf(value)
-    return top + elementSize / 2 + n * (elementSize + gap)
-  }
-}
-
-const theSVG = useTemplateRef<SVGSVGElement>('theSVG')
-const svgSize = reactive(useElementSize(theSVG, undefined, { box: 'border-box' }))
+///////// Graph Data //////////////////////////////////////////////////////////
 const damage = Array(10)
   .fill(0)
   .map((_, i) => 1.05 * i)
@@ -50,43 +15,34 @@ const methods = ['pie-under', 'pie-over', 'annulus', 'colored-skull', 'skull-ann
 const armorFraction = 0.5556 // 0 = grunt, 0.5556 = veteran, 0.7143 = elite, 0.8571 = named
 const initialArmor = 9 * armorFraction
 const initialHealth = 9 * (1 - armorFraction)
-const radius = getTightRadius('XX.XX', 24)
 
-// function rotateOut(this: SVGGElement, e: MouseEvent, data: DataPoint) {
-//   console.log("I'm the NodeGroup and I heard your click")
-//   // get clicked node position
-//   const node = this.getBoundingClientRect()
-//   // set the detail's text based on the node's data
-//   details.innerText = `I'm the NodeGroup and I heard your click\nDamage: ${data.damage.toFixed(2)}\nAnd a third line.`
-//   // show the detail to allow reading size (swinging up into place)
-//   details.showPopover()
-//   // get detail's size
-//   const { width: dW, height: dH } = details.getBoundingClientRect()
-//   details.hidePopover()
-//   // set detail's left and top to make its center align with the node's center
-//   details.style.left = `${node.x + scrollX + (node.width - dW) / 2}px`
-//   details.style.top = `${node.y + scrollY + (node.height - dH) / 2}px`
-//   // set the detail's transform origin to match the bottom of the node (regardless of the detail's height)
-//   // set the node's transform origin
-//   this.style.transformOrigin = `${horizPos(data.method)}px ${vertPos(data.damage) + (7 / 6) * radius}px`
-//   details.style.transformOrigin = `${horizPos(data.method)! + scrollX}px ${vertPos(data.damage) + (7 / 6) * radius + scrollY}px`
-//   // make the node fall
-//   this.classList.add('fall-backwards')
-//   details.showPopover()
+///////// Graph Interactivity /////////////////////////////////////////////////
+function nodeClick(this: SVGGElement, e: MouseEvent, data: DataPoint) {
+  console.log('Click on: ', data)
+  uiStore.requestSummary({
+    node: this,
+    axisOffset: (7 / 6) * radius,
+    data,
+  })
+  // uiStore.data = data
+  // uiStore.setSelectedNode(this)
+  // uiStore.rotationAxisOffset = (7 / 6) * radius
+  // this.style.transformOrigin = `${horizPos(data.method)}px ${vertPos(data.damage) + (7 / 6) * radius}px`
+  // uiStore.summaryEnter(this)
+}
 
-//   // this.style.tranformBox = 'view-box'
-//   // this.style.transition = 'transform 0.5s cubic-bezier(0.4, 1.6, 0.4, 0.8)'
-//   // this.style.transform = 'rotateX(90deg)'
-// }
-
-/** Attach D3 pan & zoom handler */
-d3.select<SVGSVGElement, unknown>('#theSVG').call(
-  d3
-    .zoom<SVGSVGElement, unknown>()
-    .on('zoom', (e) => d3.select('#graph-view').attr('transform', e.transform)),
-)
-
+///////// Node Placement //////////////////////////////////////////////////////
+/** Fundamental size characteristic of the graph - it is the radius of the middle of the outer ring. Total node height/width is 7/3 * radius. */
+const radius = textHeightToRadius('XX.XX', 24)
+/** Reference to the overall SVG container */
+const theSVG = useTemplateRef<SVGSVGElement>('theSVG')
+/** Reactive size of the SVG container */
+const svgSize = reactive(useElementSize(theSVG, undefined, { box: 'border-box' }))
+// vertical positioning is allowed to run nodes out the bottom of the SVG window
+/** Vertical scale to convert graph data to SVG coordinates */
 const vertPos = setSpacing(damage, 10, 20, (7 / 3) * radius)
+// horizontal spacing is adjusted whenever the SVG window changes size
+/** Horizontal scale to convert graph data to SVG coordinates */
 let horizPos = d3.scaleBand(methods, [0, 1000]).paddingInner(0.1).paddingOuter(0.5).align(1)
 watchDebounced(
   svgSize,
@@ -105,6 +61,8 @@ watchDebounced(
   },
 )
 
+///////// Drawing the Graph ///////////////////////////////////////////////////
+//#region
 function renderView() {
   d3.select('#graph-view')
     .selectAll('g.method-column')
@@ -120,12 +78,14 @@ function renderView() {
     .join('g')
     .attr('class', 'node-group')
     .classed('dead', (d) => d.damage >= initialArmor + initialHealth)
-    // .on('click', rotateOut)
+    .on('click', nodeClick)
+    .style(
+      'transform-origin',
+      (d) => `${horizPos(d.method)}px ${vertPos(d.damage) + (7 / 6) * radius}px`,
+    )
     .each(placeNodeSubElements)
 
   placeBullets()
-
-  //console.log(`${columnGs.size()} nodes to process`)
 }
 
 /**
@@ -147,14 +107,11 @@ function placeNodeSubElements(this: SVGGElement, data: DataPoint) {
 }
 
 /**
- * Adds the skull symbol to the element stack. Positioning (`x` and `y`) are handled by the `tranfsorm` on the parent `g`.
+ * Adds the skull symbol to the element stack.
  * @param selection The selection (parent `g`) to append this element
  * @param data The datum from the parent element
  */
 function placeSkull(selection: SVGGElement, data: DataPoint) {
-  // console.log('...placing skull')
-  // console.log(data)
-
   d3.select(selection)
     .selectAll('use.node-skull')
     .data([data.damage])
@@ -215,8 +172,6 @@ function placeHitBox(selection: SVGGElement, data: DataPoint) {
  * @param {{damage: number, method: string}} data The datum from the parent element
  */
 function placeRings(selection: SVGGElement, data: DataPoint) {
-  // console.log('...placing rings')
-
   d3.select(selection)
     .selectAll('use.node-rings')
     .data([data.damage])
@@ -314,6 +269,20 @@ function placeBullets() {
     .attr('x2', (d) => (horizPos(d.method) ?? 0) - (radius + length) * Math.cos(d.angle))
     .attr('y2', (d) => vertPos(d.damage) + (radius + length) * Math.sin(d.angle))
 }
+//#endregion
+
+onMounted(() => {
+  if (theSVG.value) {
+    const svg = d3.select(theSVG.value)
+    const zoom = d3
+      .zoom<SVGSVGElement, unknown>()
+      .scaleExtent([0.5, 4])
+      .on('zoom', (event) => {
+        svg.select('#graph-view').attr('transform', event.transform)
+      })
+    svg.call(zoom)
+  }
+})
 </script>
 
 <template>
@@ -462,20 +431,13 @@ function placeBullets() {
         <g
           class="crosshairs"
           fill="none"
-          stroke="oklch(0.73 0.1684 53.17)"
+          stroke="var(--division-orange)"
           stroke-width="10"
           opacity="var(--crosshair-visibility)"
         >
           <circle cx="0" cy="0" r="90" />
           <path d="M 0,-105 v 40 M 105,0 h -40 M 0,105 v -40 M -105,0 h 40" />
-          <circle
-            id="center-dot"
-            cx="0"
-            cy="0"
-            r="5"
-            fill="oklch(0.73 0.1684 53.17)"
-            stroke="none"
-          />
+          <circle id="center-dot" cx="0" cy="0" r="5" fill="var(--division-orange)" stroke="none" />
         </g>
       </symbol>
       <!------------------------------------------------------------------------------------------------------------------------------------------------>
@@ -506,17 +468,11 @@ function placeBullets() {
 <style lang="css">
 :root {
   /*---- Colors -----------------------------------------------------------------------------------*/
-  --named-item-orange: oklch(
-    0.73 0.1681 53.17
-  ); /* var( lightness [0.6648, 0.7529], chroma [0, 0.1839] */
-  --armor-base: oklch(
-    0.7 0.1637 247.53
-  ); /*#2C9EF7; compatible tetradic color to Named Item Orange*/
-  --health-base: oklch(
-    0.73 0.2722 142.16
-  ); /*#39F72C; compatible tetradic color to Named Item Orange*/
+  --division-orange: oklch(0.7 0.2 45); /* Pulled from logo */
+  --armor-base: oklch(0.7 0.1637 225); /* compatible tetradic color to Division Orange */
+  --health-base: oklch(0.73 0.2722 135); /* compatible tetradic color to Division Orange */
   --pie-armor: var(--armor-base); /* --pie-health: oklch(var(--lightness) var(--chroma) 142.16); */
-  --pie-health: oklch(0.7527 0.1983 142.16);
+  --pie-health: oklch(0.7527 0.1983 135);
   --lightness: 0.68;
   --chroma: 0.1637;
   --background-brightness: 0.5;
@@ -529,14 +485,14 @@ function placeBullets() {
 }
 
 #armor-background {
-  fill: oklch(var(--lightness) var(--chroma) 247.53); /* tinkering */
-  fill: oklch(0.5772 0.0342 247.53); /* chosen */
+  fill: oklch(var(--lightness) var(--chroma) 225); /* tinkering */
+  fill: oklch(0.5772 0.0342 225); /* chosen */
   fill: transparent;
 }
 
 #health-background {
-  fill: oklch(var(--lightness) var(--chroma) 142.16); /* tinkering */
-  fill: oklch(0.6853 0.02 142.16); /* chosen */
+  fill: oklch(var(--lightness) var(--chroma) 145); /* tinkering */
+  fill: oklch(0.6853 0.02 135); /* chosen */
   fill: transparent;
 }
 
@@ -548,7 +504,7 @@ function placeBullets() {
   stroke-width: 0;
   stroke: oklch(0.5 0 0);
   text-shadow:
-    0px 0px 5px var(--named-item-orange),
+    0px 0px 5px var(--division-orange),
     0px 0px 4px #f8f8f8;
 }
 
@@ -571,7 +527,7 @@ clipPath {
 }
 
 #radial-streaks {
-  stroke: oklch(from var(--named-item-orange) 0.05 c h / 0.4);
+  stroke: oklch(from var(--division-orange) 0.05 c h / 0.4);
 }
 
 #streaky-bullet g {
@@ -580,7 +536,7 @@ clipPath {
 }
 
 #theSVG {
-  background-color: oklch(var(--background-brightness) 0.01 233.17);
+  background-color: oklch(var(--background-brightness) 0.01 225);
   width: 100%;
   height: 100%;
 }
@@ -594,7 +550,8 @@ clipPath {
   cursor: help;
 }
 
-#theSVG:active /*.node-group:hover*/ {
+#theSVG:active,
+.node-group:active {
   cursor: all-scroll;
 }
 
@@ -641,6 +598,19 @@ clipPath {
 }
 
 .fall-backwards {
-  animation: calc(var(--falldown-duration) * 1s) fall-backwards forwards;
+  animation: fall-backwards calc(var(--falldown-duration) * 1s) linear forwards;
+}
+
+@keyframes spring-up {
+  0% {
+    transform: rotateX(90deg);
+  }
+  100% {
+    transform: rotateX(0deg);
+  }
+}
+
+.spring-up {
+  animation: 0.3s spring-up cubic-bezier(1, 2.67, 0.79, 0.73) forwards;
 }
 </style>

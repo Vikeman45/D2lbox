@@ -14,7 +14,7 @@ export type tMenuItemRecord = {
 //################### Store Definition ###################//
 export const useMenuStructureStore = defineStore('menuStructure', () => {
   /** Application-level menu creation info */
-  const menuItemData = reactive(sourceData as tMenuItemRecord[])
+  const menuItemData = reactive<tMenuItemRecord[]>(sourceData)
 
   return { menuItemData }
 })
