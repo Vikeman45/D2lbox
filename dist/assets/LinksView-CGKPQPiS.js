@@ -1,0 +1,1 @@
+import{_ as s,a as n,b as a,o as t}from"./index-BOaC0vfq.js";const o={},i={class:"links app-grid-main"};function r(c,e){return t(),n("main",i,e[0]||(e[0]=[a("h1",null,"This is the Links page",-1)]))}const l=s(o,[["render",r]]);export{l as default};

@@ -1,0 +1,1 @@
+import{_ as a,a as s,b as t,o}from"./index-BOaC0vfq.js";const i={},n={class:"about app-grid-main"};function c(r,e){return o(),s("main",n,e[0]||(e[0]=[t("h1",null,"This is the Specializations page",-1)]))}const p=a(i,[["render",c]]);export{p as default};
