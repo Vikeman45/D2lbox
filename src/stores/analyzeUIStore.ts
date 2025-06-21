@@ -46,6 +46,22 @@ const usePrivateState = defineStore('private-state', () => {
             }
           }
         }
+        if (pendingRequests.value.size === 1) {
+          // is this the final request (that gets honored)?
+          activeRequest.value = pendingRequests.value.values().next().value // then set the active request
+          pendingRequests.value.clear() // and empty the request queue
+        } else {
+          // otherwise, this request is ignored
+          restoreNode(node) // reset the node graphic
+
+          // and clear this node from the request queue
+          for (const request of pendingRequests.value) {
+            if (node === request.node) {
+              pendingRequests.value.delete(request)
+              break
+            }
+          }
+        }
       },
       { once: true, passive: true },
     )
@@ -73,6 +89,7 @@ const usePrivateState = defineStore('private-state', () => {
   return {
     /** The node on which to attach the summary */
     activeRequest,
+    /** Set of pending summary requests (used to handle the case of multiple node clicks prior to presenting the summary) */
     /** Set of pending summary requests (used to handle the case of multiple node clicks prior to presenting the summary) */
     pendingRequests,
     /** Flag to indicate that the summary should be shown */
@@ -132,6 +149,7 @@ export const useAnalyzeUIStore = defineStore('analyzeUI', () => {
    */
   function requestSummary({ node, data, axisOffset }: NodeData) {
     console.log('Summary requested for node ', node, ' with data ', data)
+    privateState.pendingRequests.add({ node, data, axisOffset, center: getNodeCenter(node) })
     privateState.pendingRequests.add({ node, data, axisOffset, center: getNodeCenter(node) })
     dropNode(node)
   }
