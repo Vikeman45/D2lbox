@@ -11,7 +11,9 @@ import { defineStore, storeToRefs } from 'pinia'
 import { computed, ref, watch } from 'vue'
 
 const usePrivateState = defineStore('private-state', () => {
-  const pendingRequests = ref<RequestData[]>([])
+  // using a Set instead of a simple Array to handle the case where a user may click on the same node more than
+  // once before it completes its collapse animation
+  const pendingRequests = ref<Set<RequestData>>(new Set())
   const activeRequest = ref<RequestData>()
   // const showSummary = ref(false)
 
@@ -28,31 +30,25 @@ const usePrivateState = defineStore('private-state', () => {
         node.style.transform = 'rotateX(90deg)' // clean up the node's classes to be ready for
         node.classList.remove('fall-backwards') // future animation
 
-        maybeTriggerSummary(node)
+        if (pendingRequests.value.size === 1) {
+          // is this the final request (that gets honored)?
+          activeRequest.value = pendingRequests.value.values().next().value // then set the active request
+          pendingRequests.value.clear() // and empty the request queue
+        } else {
+          // otherwise, this request is ignored
+          restoreNode(node) // reset the node graphic
+
+          // and clear this node from the request queue
+          for (const request of pendingRequests.value) {
+            if (node === request.node) {
+              pendingRequests.value.delete(request)
+              break
+            }
+          }
+        }
       },
       { once: true, passive: true },
     )
-  }
-
-  // Without handling this (relatively) rare race condition, either the animations will get out of
-  // sync (or completely broken) or some tree nodes may be left in a hidden state
-  /**
-   * Action to determine if this node should be bound to the summary (was the last request). If it
-   * was not the last request, its tree node will be restored.
-   *
-   * Multiple requests only occur if additional tree nodes are clicked before the first one's animation
-   * has completed.
-   * @param potentaillyActiveNode The potential candidate node for binding to the summary
-   */
-  function maybeTriggerSummary(potentaillyActiveNode: SVGGElement) {
-    const lastRequest = pendingRequests.value.at(-1) // only the last request gets honored
-    if (lastRequest && potentaillyActiveNode !== lastRequest.node) return void 0
-
-    activeRequest.value = pendingRequests.value.pop()
-    // showSummary.value = true // trigger the summary
-    while (pendingRequests.value.length > 0) {
-      restoreNode(pendingRequests.value.pop()!.node) // restore ignored requests while clearing the queue
-    }
   }
 
   /**
@@ -77,7 +73,7 @@ const usePrivateState = defineStore('private-state', () => {
   return {
     /** The node on which to attach the summary */
     activeRequest,
-    /** Array of pending summary requests (used to handle the case of multiple node clicks prior to presenting the summary) */
+    /** Set of pending summary requests (used to handle the case of multiple node clicks prior to presenting the summary) */
     pendingRequests,
     /** Flag to indicate that the summary should be shown */
     // showSummary,
@@ -87,15 +83,6 @@ const usePrivateState = defineStore('private-state', () => {
      * @param node The selected tree node
      */
     dropNode,
-    /**
-     * Action to determine of this node should be bound to the summary (was the last request). If it
-     * was not the last request, its tree node will be restored.
-     *
-     * Multiple requests only occur if additional tree nodes are clicked before the first one's animation
-     * has completed.
-     * @param potentaillyActiveNode The potential candidate node for binding to the summary
-     */
-    maybeTriggerSummary,
     /**
      * Action to show a previously hidden tree node
      * @param node The tree node to restore
@@ -145,8 +132,7 @@ export const useAnalyzeUIStore = defineStore('analyzeUI', () => {
    */
   function requestSummary({ node, data, axisOffset }: NodeData) {
     console.log('Summary requested for node ', node, ' with data ', data)
-    privateState.pendingRequests.push({ node, data, axisOffset, center: getNodeCenter(node) })
-    // if (summaryIsShowing.value) privateShowSummary.value = false
+    privateState.pendingRequests.add({ node, data, axisOffset, center: getNodeCenter(node) })
     dropNode(node)
   }
 
