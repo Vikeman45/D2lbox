@@ -1,0 +1,1 @@
+import{_ as r,a,b as s,o as t}from"./index-eKo48yw8.js";const n={},o={class:"library app-grid-main"};function i(c,e){return t(),a("main",o,e[0]||(e[0]=[s("h1",null,"This is the Library page",-1)]))}const l=r(n,[["render",i]]);export{l as default};

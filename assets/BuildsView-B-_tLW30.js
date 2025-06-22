@@ -1,0 +1,1 @@
+import{_ as s,a,b as t,o as n}from"./index-eKo48yw8.js";const o={},i={class:"builds app-grid-main"};function r(c,e){return n(),a("main",i,e[0]||(e[0]=[t("h1",null,"This is the Builds page",-1)]))}const d=s(o,[["render",r]]);export{d as default};
