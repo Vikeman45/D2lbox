@@ -18,7 +18,7 @@ const initialHealth = 9 * (1 - armorFraction)
 
 ///////// Graph Interactivity /////////////////////////////////////////////////
 function nodeClick(this: SVGGElement, e: MouseEvent, data: DataPoint) {
-  console.log('Click on: ', data)
+  // console.log('Click on: ', data)
   uiStore.requestSummary({
     node: this,
     axisOffset: (7 / 6) * radius,

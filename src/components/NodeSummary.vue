@@ -1,85 +1,84 @@
 <script setup lang="ts">
-import { type DataPoint, useAnalyzeUIStore } from '@/stores/analyzeUIStore'
+import { type DataPoint, type RequestData, useAnalyzeUIStore } from '@/stores/analyzeUIStore'
 import { storeToRefs } from 'pinia'
 import { ref, onMounted, onUnmounted, useTemplateRef, watch } from 'vue'
 
 const theSummary = useTemplateRef('nodeSummary')
 const uiData = useAnalyzeUIStore()
 
-/** Hardcoded width of the popover element */
-const popoverWidth = 225
-/** Hardcoded hieght of the popover element */
-const popoverHeight = 110
+// reactive versions of variables from the analyzeUIStore
+const { summaryState, requestWaiting } = storeToRefs(uiData)
+// const animationCancelled = ref(false)
+
 /** The x-coordinate for the left side of the popover (in pixels) that centers it on the node */
 const popoverLeft = ref('0px')
 /** The y-coordinate for the top of the popover (in pixels) that centers it on the node */
 const popoverTop = ref('0px')
-// reactive versions of variables from the analyzeUIStore
-const { showSummary, summaryIsShowing, summaryState } = storeToRefs(uiData)
-// import actions
-const { userDismissedSummary } = uiData
 /** The coordinate defining the `transform-origin` for the summary popover */
 const rotationAxis = ref('0px 0px')
 /** The data from the tree node */
 const nodeData = ref<DataPoint>({ damage: 0, method: '???' })
 
-watch(showSummary, (newVal, oldVal) => {
-  if (oldVal !== newVal) {
-    if (newVal) {
-      console.log('triggered to show popover')
-      theSummary.value?.showPopover()
-    } else {
-      if (
-        theSummary.value?.matches(':popover-open') &&
-        !theSummary.value.matches('fall-backwards')
-      ) {
-        console.log('triggered to hide popover')
-        theSummary.value?.hidePopover()
-      }
-      console.log('the popover is already hidden')
-    }
-    console.log('watcher on showSummary triggered with no change in value')
+watch(requestWaiting, (request, oldRequest) => {
+  if (request && !oldRequest && theSummary.value) {
+    summarySetup(request)
+    theSummary.value.showPopover()
   }
 })
 
-function togglePopover(e: ToggleEvent) {
-  console.log(`Entering handleToggle`)
-  if (!theSummary.value) return void 0 // escape the event if the popover is not mounted
-  if (e.newState === 'open') {
-    console.log('Summary popover about to open')
-    popoverLeft.value = `${(uiData.position?.cx ?? 0) - popoverWidth / 2}px`
-    popoverTop.value = `${(uiData.position?.cy ?? 0) - popoverHeight / 2}px`
-    rotationAxis.value = `50% ${popoverHeight / 2 + (uiData.rotationAxisOffset ?? 0)}px`
-    nodeData.value = uiData.data ?? { damage: 0, method: '???' }
-    summaryIsShowing.value = true
-    summaryState.value = 'SHOWING'
-  } else {
-    console.log('closing popover')
-    theSummary.value.addEventListener(
-      'animationend',
-      () => {
-        console.log('fall-backwards animation ended on the Summary')
-        if (showSummary) {
-          console.log('communicating user action back to analyzeUIStore')
+function summarySetup(request: RequestData) {
+  /** Hardcoded width of the popover element */
+  const popoverWidth = 225
+  /** Hardcoded hieght of the popover element */
+  const popoverHeight = 110
 
-          userDismissedSummary()
-        }
-        summaryIsShowing.value = false
-        summaryState.value = 'READY'
-      },
-      { once: true, passive: true },
-    )
+  // console.log('--> summarySetup(): attaching summary element to the requested graph node')
+
+  popoverLeft.value = `${request.center.cx - popoverWidth / 2}px`
+  popoverTop.value = `${request.center.cy - popoverHeight / 2}px`
+  rotationAxis.value = `50% ${popoverHeight / 2 + request.axisOffset}px`
+  nodeData.value = request.data
+}
+
+function togglePopover(e: ToggleEvent) {
+  // console.log(`--> togglePopover`)
+  if (!theSummary.value) return // escape the event if the popover is not mounted
+  if (e.newState === 'open') {
+    // console.log('   Summary popover about to open')
+    summaryState.value = 'RISING'
+  } else {
+    // console.log('   Summary popover about to close')
     summaryState.value = 'FALLING'
-    theSummary.value.classList.add('fall-backwards')
   }
 }
 
+function updateStatus(e: AnimationEvent) {
+  // console.log(`⏱️ theSummary's ${e.animationName} animation ended`)
+  if (
+    e.animationName.includes('fall-backwards') ||
+    (summaryState.value === 'FALLING' && theSummary.value?.clientHeight === 0)
+  )
+    summaryState.value = 'READY'
+  if (e.animationName.includes('spring-up')) summaryState.value = 'SHOWING'
+}
+
 onMounted(() => {
-  console.log('popover mounted')
+  // console.log('popover mounted')
   summaryState.value = 'READY'
+  if (theSummary.value) {
+    theSummary.value.addEventListener('animationend', updateStatus, { passive: true })
+    theSummary.value.addEventListener(
+      'animationcancel',
+      (e: AnimationEvent) => {
+        console.warn(`Animation ${e.animationName} cancelled by the browser`)
+        updateStatus(e)
+      },
+      { passive: true },
+    )
+  }
 })
 onUnmounted(() => {
-  console.log('popover unmounted')
+  // console.log('popover unmounted')
   summaryState.value = 'UNAVAILABLE'
 })
 </script>
@@ -111,7 +110,11 @@ aside {
   left: v-bind('popoverLeft');
   top: v-bind('popoverTop');
   transform-origin: v-bind('rotationAxis');
-  animation: fall-backwards var(--falldown-duration) linear forwards;
+  animation: fall-backwards calc(var(--falldown-duration) * 1s) linear forwards;
+}
+
+aside:popover-open {
+  animation: spring-up 0.3s cubic-bezier(1, 2.67, 0.79, 0.73) forwards;
 }
 
 table {
@@ -145,14 +148,6 @@ tbody td:first-of-type {
 }
 tbody td:last-of-type {
   text-align: left;
-}
-
-aside:popover-open {
-  animation: spring-up 0.3s cubic-bezier(1, 2.67, 0.79, 0.73) forwards;
-}
-
-ul {
-  list-style: none;
 }
 
 @keyframes fall-backwards {
@@ -213,7 +208,7 @@ ul {
   }
 }
 
-.fall-backwards {
-  animation: calc((var(--falldown-duration) - 0.05) * 1s) fall-backwards forwards;
-}
+/* .fall-backwards {
+  animation: fall-backwards calc(var(--falldown-duration) * 1s) linear forwards;
+} */
 </style>

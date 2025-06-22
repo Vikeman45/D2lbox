@@ -7,15 +7,14 @@
 // communicates with Vue component(s) responsible for display of the summary.
 ///////////////////////////////////////////////////////////////////////////////////////////////
 
-import { defineStore, storeToRefs } from 'pinia'
-import { computed, ref, watch } from 'vue'
+import { defineStore } from 'pinia'
+import { ref, watchEffect } from 'vue'
 
 const usePrivateState = defineStore('private-state', () => {
   // using a Set instead of a simple Array to handle the case where a user may click on the same node more than
   // once before it completes its collapse animation
   const pendingRequests = ref<Set<RequestData>>(new Set())
-  const activeRequest = ref<RequestData>()
-  // const showSummary = ref(false)
+  const activeRequest = ref<RequestData | null>(null)
 
   /**
    * Action to kick off animation removing the selected tree node and then trigger summary, if appropriate
@@ -32,23 +31,8 @@ const usePrivateState = defineStore('private-state', () => {
 
         if (pendingRequests.value.size === 1) {
           // is this the final request (that gets honored)?
-          activeRequest.value = pendingRequests.value.values().next().value // then set the active request
-          pendingRequests.value.clear() // and empty the request queue
-        } else {
-          // otherwise, this request is ignored
-          restoreNode(node) // reset the node graphic
-
-          // and clear this node from the request queue
-          for (const request of pendingRequests.value) {
-            if (node === request.node) {
-              pendingRequests.value.delete(request)
-              break
-            }
-          }
-        }
-        if (pendingRequests.value.size === 1) {
-          // is this the final request (that gets honored)?
-          activeRequest.value = pendingRequests.value.values().next().value // then set the active request
+          const request = pendingRequests.value.values().next().value
+          activeRequest.value = request ?? null // then set the active request
           pendingRequests.value.clear() // and empty the request queue
         } else {
           // otherwise, this request is ignored
@@ -72,13 +56,12 @@ const usePrivateState = defineStore('private-state', () => {
    * @param node The tree node to restore
    */
   function restoreNode(node: SVGGElement) {
-    console.log('restoring node ', node)
     node.classList.add('spring-up')
 
     node.addEventListener(
       'animationend',
       () => {
-        console.log('animation completed on ', node)
+        // console.log('animation completed on ', node)
         node.style.transform = 'rotateX(0deg)' // clean up the node's classes to be ready for
         node.classList.remove('spring-up') // future animation
       },
@@ -86,15 +69,24 @@ const usePrivateState = defineStore('private-state', () => {
     )
   }
 
+  /**
+   * Action to clear the active summary request
+   */
+  function clearRequest() {
+    activeRequest.value = null
+    // console.log('activeRequest cleared')
+  }
+
   return {
     /** The node on which to attach the summary */
     activeRequest,
     /** Set of pending summary requests (used to handle the case of multiple node clicks prior to presenting the summary) */
-    /** Set of pending summary requests (used to handle the case of multiple node clicks prior to presenting the summary) */
     pendingRequests,
-    /** Flag to indicate that the summary should be shown */
-    // showSummary,
 
+    /**
+     * Action to clear the active summary request
+     */
+    clearRequest,
     /**
      * Action to kick off animation removing the selected tree node and then trigger summary, if appropriate
      * @param node The selected tree node
@@ -110,48 +102,42 @@ const usePrivateState = defineStore('private-state', () => {
 
 export const useAnalyzeUIStore = defineStore('analyzeUI', () => {
   const privateState = usePrivateState()
-  const { activeRequest } = storeToRefs(privateState)
-  const { dropNode, restoreNode } = privateState
-  // const showSummary = computed(() => privateState.showSummary) // rebroadcast from the private store
-  const showSummary = ref(false)
-  const selectedNode = computed(() => privateState.activeRequest?.node)
-  const data = computed(() => privateState.activeRequest?.data)
-  const rotationAxisOffset = computed(() => privateState.activeRequest?.axisOffset)
-  const position = computed(() => privateState.activeRequest?.center)
-  const summaryIsShowing = ref(false)
-  const summaryUserDismissed = ref(false)
   const summaryState = ref<SummaryStatus>('UNAVAILABLE')
+  const requestWaiting = ref<RequestData | null>(null)
+  const activeNode = ref<SVGGElement | null>(null)
 
-  watch([summaryState, activeRequest], ([summaryState, activeRequest]) => {
-    if (activeRequest && summaryState === 'READY') {
-      showSummary.value = true
+  watchEffect(() => {
+    // console.log('--> analyzeUIStore.watch')
+    // console.log(`   summaryState = ${summaryState.value}`)
+    if (summaryState.value === 'READY') {
+      if (activeNode.value && activeNode.value.clientHeight === 0) {
+        // console.log('   restoring node ', activeNode.value, ' and clearing activeNode')
+        privateState.restoreNode(activeNode.value)
+        activeNode.value = null
+      }
+      if (privateState.activeRequest) {
+        // console.log('   setting requestWaiting')
+        requestWaiting.value = privateState.activeRequest
+      }
+      return
     }
-    if (!activeRequest) showSummary.value = false
-  })
 
-  /**
-   * Action to communicate that the Summary element was dismissed through user action (pressing `ESC`
-   * or clicking off the element) rather than programatically. Kicks off a series of clean-up actions
-   * for the state.
-   */
-  function userDismissedSummary() {
-    console.log('picked up user action')
-    restoreNode(selectedNode.value!)
-    // privateShowSummary.value = false
-    showSummary.value = false
-    console.log('activeRequest reset')
-    privateState.activeRequest = undefined
-  }
+    if (summaryState.value === 'RISING' && requestWaiting.value) {
+      // console.log('   setting activeNode and clearing summary request')
+      activeNode.value = requestWaiting.value.node
+      requestWaiting.value = null
+      privateState.clearRequest()
+    }
+  })
 
   /**
    * Action to register a selected tree node for summary and triggers the animation to hide the node.
    * @param nodeData The SVG element, data, position and rotation axis for the requesting tree node
    */
   function requestSummary({ node, data, axisOffset }: NodeData) {
-    console.log('Summary requested for node ', node, ' with data ', data)
+    // console.log('Summary requested for node ', node, ' with data ', data)
     privateState.pendingRequests.add({ node, data, axisOffset, center: getNodeCenter(node) })
-    privateState.pendingRequests.add({ node, data, axisOffset, center: getNodeCenter(node) })
-    dropNode(node)
+    privateState.dropNode(node)
   }
 
   /**
@@ -168,20 +154,10 @@ export const useAnalyzeUIStore = defineStore('analyzeUI', () => {
   }
 
   return {
-    /** The data associated with the selected node */
-    data,
-    /** The center point of the selected tree node or (0,0) if no node is selected */
-    position,
-    /** The y-axis offset of the axis of rotation from the selected node's center (in pixels) */
-    rotationAxisOffset,
     /** The seected node from the tree graph to summarize */
-    selectedNode,
-    /** Flag to indicate that the summary should be shown */
-    showSummary,
-    /** Flag to indicate that the summary popover has been dismissed by the user (either pressing `ESC` of clicking outside of the popover) */
-    summaryUserDismissed,
-    /**  Flag to indicate that the summary is visible (true=visible) */
-    summaryIsShowing,
+    activeNode,
+    /** The data associated with the node requestng a summary */
+    requestWaiting,
     /** The current status of the summary popover */
     summaryState,
 
@@ -196,12 +172,6 @@ export const useAnalyzeUIStore = defineStore('analyzeUI', () => {
      * @param nodeData The SVG element, data, position and rotation axis for the requesting tree node
      */
     requestSummary,
-    /**
-     * Action to communicate that the Summary element was dismissed through user action (pressing `ESC`
-     * or clicking off the element) rather than programatically. Kicks off a series of clean-up actions
-     * for the state.
-     */
-    userDismissedSummary,
   }
 })
 
@@ -234,4 +204,4 @@ export interface RequestData extends NodeData {
   center: NodePosition
 }
 
-type SummaryStatus = 'UNAVAILABLE' | 'READY' | 'FALLING' | 'SHOWING'
+export type SummaryStatus = 'UNAVAILABLE' | 'READY' | 'RISING' | 'SHOWING' | 'FALLING'
